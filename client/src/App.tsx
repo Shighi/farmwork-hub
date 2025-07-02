@@ -17,6 +17,12 @@ import { Profile } from './pages/Profile'; // Assuming this is also a named expo
 import { Dashboard } from './pages/Dashboard'; // Assuming this is also a named export
 import Login from './pages/Login';
 import Register from './pages/Register';
+import AboutUs from './pages/About';
+import PrivacyPolicy from './pages/Privacy';
+import TermsOfService from './pages/Terms';
+import CookiePolicy from './pages/Cookie';
+
+
 
 // Protected Route Component
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -26,7 +32,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
-      <main className="flex-1 pt-16">
+      <main className="flex-1">
         {children}
       </main>
       <Footer />
@@ -66,11 +72,48 @@ const AppContent: React.FC = () => {
             </AppLayout>
           } 
         />
+
         <Route 
           path="/jobs/:id" 
           element={
             <AppLayout>
               <JobDetails />
+            </AppLayout>
+          } 
+        />
+
+         <Route 
+          path="/about" 
+          element={
+            <AppLayout>
+              <AboutUs />
+            </AppLayout>
+          } 
+        />
+
+        <Route 
+          path="/privacy" 
+          element={
+            <AppLayout>
+              <PrivacyPolicy />
+            </AppLayout>
+          } 
+        />
+
+        <Route 
+          path="/terms" 
+          element={
+            <AppLayout>
+              <TermsOfService />
+            </AppLayout>
+          } 
+        />
+
+        <Route 
+          path="/cookies" 
+          element={
+            <AppLayout>
+              <CookiePolicy />
             </AppLayout>
           } 
         />

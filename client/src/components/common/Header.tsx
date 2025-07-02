@@ -11,7 +11,8 @@ import {
   Search,
   Plus,
   Briefcase,
-  Home
+  Home,
+  TreePalm
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -44,7 +45,7 @@ export const Header: React.FC = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <div className="bg-primary-600 p-2 rounded-lg">
-              <Briefcase className="h-6 w-6 text-white" />
+              <TreePalm className="h-6 w-6 text-white" />
             </div>
             <span className="text-xl font-bold text-gray-900">FarmWork Hub</span>
           </Link>

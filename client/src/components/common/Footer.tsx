@@ -206,6 +206,9 @@ export const Footer: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm text-gray-400">
               <span>© {currentYear} FarmWork Hub. All rights reserved.</span>
               <div className="flex space-x-4">
+                <Link to="/about" className="hover:text-white transition-colors">
+                  About Us
+                </Link>
                 <Link to="/privacy" className="hover:text-white transition-colors">
                   Privacy Policy
                 </Link>
