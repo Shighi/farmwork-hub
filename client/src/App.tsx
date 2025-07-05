@@ -21,8 +21,9 @@ import AboutUs from './pages/About';
 import PrivacyPolicy from './pages/Privacy';
 import TermsOfService from './pages/Terms';
 import CookiePolicy from './pages/Cookie';
-
-
+import CareerTips from './pages/CareerTips';
+import SafetyGuidelines from './pages/Safety';
+import SuccessStories from './pages/SuccessStories';
 
 // Protected Route Component
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -110,6 +111,15 @@ const AppContent: React.FC = () => {
         />
 
         <Route 
+          path="/resources/career-tips" 
+          element={
+            <AppLayout>
+              <CareerTips />
+            </AppLayout>
+          } 
+        />
+        
+        <Route 
           path="/cookies" 
           element={
             <AppLayout>
@@ -117,9 +127,27 @@ const AppContent: React.FC = () => {
             </AppLayout>
           } 
         />
-        
+
+        <Route
+          path="/safety"
+          element={
+            <AppLayout>
+              <SafetyGuidelines />
+            </AppLayout>
+          }
+          />
+
+        <Route
+          path="/success-stories"
+          element={
+            <AppLayout>
+              <SuccessStories />
+            </AppLayout>
+          }
+          />
+
         {/* Auth Routes */}
-        <Route 
+        <Route
           path="/login" 
           element={
             <AuthRedirect>
