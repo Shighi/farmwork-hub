@@ -7,6 +7,7 @@ import { useAuth } from './hooks/useAuth';
 import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
 import LoadingSpinner from './components/common/LoadingSpinner';
+import CookieBanner from './components/common/CookieBanner';
 
 // Page Components
 import Home from './pages/Home';
@@ -21,6 +22,7 @@ import AboutUs from './pages/About';
 import PrivacyPolicy from './pages/Privacy';
 import TermsOfService from './pages/Terms';
 import CookiePolicy from './pages/Cookie';
+import ContactForm from './pages/Contact';
 
 
 
@@ -117,6 +119,16 @@ const AppContent: React.FC = () => {
             </AppLayout>
           } 
         />
+
+        <Route
+          path="/contact"
+          element={
+            <AppLayout>
+              <ContactForm />
+            </AppLayout>
+          }
+        />
+
         
         {/* Auth Routes */}
         <Route 
@@ -171,7 +183,12 @@ const AppContent: React.FC = () => {
         {/* Catch all route - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+
+      {/* GDPR Cookie Notice */}
+          <CookieBanner />
     </Router>
+
+    
   );
 };
 
