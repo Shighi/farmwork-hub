@@ -17,6 +17,13 @@ import { Profile } from './pages/Profile'; // Assuming this is also a named expo
 import { Dashboard } from './pages/Dashboard'; // Assuming this is also a named export
 import Login from './pages/Login';
 import Register from './pages/Register';
+import AboutUs from './pages/About';
+import PrivacyPolicy from './pages/Privacy';
+import TermsOfService from './pages/Terms';
+import CookiePolicy from './pages/Cookie';
+import CareerTips from './pages/CareerTips';
+import SafetyGuidelines from './pages/Safety';
+import SuccessStories from './pages/SuccessStories';
 
 // Protected Route Component
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -26,7 +33,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
-      <main className="flex-1 pt-16">
+      <main className="flex-1">
         {children}
       </main>
       <Footer />
@@ -66,6 +73,7 @@ const AppContent: React.FC = () => {
             </AppLayout>
           } 
         />
+
         <Route 
           path="/jobs/:id" 
           element={
@@ -74,9 +82,72 @@ const AppContent: React.FC = () => {
             </AppLayout>
           } 
         />
-        
-        {/* Auth Routes */}
+
+         <Route 
+          path="/about" 
+          element={
+            <AppLayout>
+              <AboutUs />
+            </AppLayout>
+          } 
+        />
+
         <Route 
+          path="/privacy" 
+          element={
+            <AppLayout>
+              <PrivacyPolicy />
+            </AppLayout>
+          } 
+        />
+
+        <Route 
+          path="/terms" 
+          element={
+            <AppLayout>
+              <TermsOfService />
+            </AppLayout>
+          } 
+        />
+
+        <Route 
+          path="/resources/career-tips" 
+          element={
+            <AppLayout>
+              <CareerTips />
+            </AppLayout>
+          } 
+        />
+        
+        <Route 
+          path="/cookies" 
+          element={
+            <AppLayout>
+              <CookiePolicy />
+            </AppLayout>
+          } 
+        />
+
+        <Route
+          path="/safety"
+          element={
+            <AppLayout>
+              <SafetyGuidelines />
+            </AppLayout>
+          }
+          />
+
+        <Route
+          path="/success-stories"
+          element={
+            <AppLayout>
+              <SuccessStories />
+            </AppLayout>
+          }
+          />
+
+        {/* Auth Routes */}
+        <Route
           path="/login" 
           element={
             <AuthRedirect>
