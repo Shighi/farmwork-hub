@@ -16,47 +16,48 @@ export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
   const footerSections = [
-    {
-      title: 'For Job Seekers',
-      links: [
-        { label: 'Browse Jobs', href: '/jobs' },
-        { label: 'Job Categories', href: '/jobs?category=all' },
-        { label: 'Career Tips', href: '/resources/career-tips' },
-        { label: 'Resume Builder', href: '/tools/resume-builder' },
-        { label: 'Salary Guide', href: '/resources/salary-guide' },
-      ],
-    },
-    {
-      title: 'For Employers',
-      links: [
-        { label: 'Post a Job', href: '/post-job' },
-        { label: 'Employer Dashboard', href: '/dashboard' },
-        { label: 'Pricing', href: '/pricing' },
-        { label: 'Recruitment Tips', href: '/resources/recruitment' },
-        { label: 'Success Stories', href: '/success-stories' },
-      ],
-    },
-    {
-      title: 'Resources',
-      links: [
-        { label: 'Agriculture News', href: '/resources/news' },
-        { label: 'Training Programs', href: '/resources/training' },
-        { label: 'Market Insights', href: '/resources/market' },
-        { label: 'Best Practices', href: '/resources/practices' },
-        { label: 'Industry Reports', href: '/resources/reports' },
-      ],
-    },
-    {
-      title: 'Support',
-      links: [
-        { label: 'Help Center', href: '/help' },
-        { label: 'Contact Us', href: '/contact' },
-        { label: 'FAQs', href: '/faq' },
-        { label: 'Safety Guidelines', href: '/safety' },
-        { label: 'Report Issue', href: '/report' },
-      ],
-    },
-  ];
+  {
+    title: 'For Job Seekers',
+    links: [
+      { label: 'Browse Jobs', to: '/jobs' },
+      { label: 'Job Categories', to: '/jobs?category=all' },
+      { label: 'Career Tips', to: '/resources/career-tips' },
+      { label: 'Resume Builder', to: '/tools/resume-builder' },
+      { label: 'Salary Guide', to: '/resources/salary-guide' },
+    ],
+  },
+  {
+    title: 'For Employers',
+    links: [
+      { label: 'Post a Job', to: '/post-job' },
+      { label: 'Employer Dashboard', to: '/dashboard' },
+      { label: 'Pricing', to: '/pricing' },
+      { label: 'Recruitment Tips', to: '/resources/recruitment' },
+      { label: 'Success Stories', to: '/success-stories' },
+    ],
+  },
+  {
+    title: 'Resources',
+    links: [
+      { label: 'Agriculture News', to: '/resources/news' },
+      { label: 'Training Programs', to: '/resources/training' },
+      { label: 'Market Insights', to: '/resources/market' },
+      { label: 'Best Practices', to: '/resources/practices' },
+      { label: 'Industry Reports', to: '/resources/reports' },
+    ],
+  },
+  {
+    title: 'Support',
+    links: [
+      { label: 'Help Center', to: '/help' },
+      { label: 'Contact Us', to: '/contact' },
+      { label: 'FAQs', to: '/faq' },
+      { label: 'Safety Guidelines', to: '/safety' },
+      { label: 'Report Issue', to: '/report' },
+    ],
+  },
+];
+
 
   const socialLinks = [
     { icon: Facebook, href: 'https://facebook.com/farmworkhub', label: 'Facebook' },
@@ -132,7 +133,7 @@ export const Footer: React.FC = () => {
                 {section.links.map((link) => (
                   <li key={link.label}>
                     <Link
-                      to={link.href}
+                      to={link.to}
                       className="text-gray-300 hover:text-white transition-colors text-sm"
                     >
                       {link.label}
