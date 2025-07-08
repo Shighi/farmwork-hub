@@ -25,7 +25,11 @@ import CookiePolicy from './pages/Cookie';
 import CareerTips from './pages/CareerTips';
 import SafetyGuidelines from './pages/Safety';
 import SuccessStories from './pages/SuccessStories';
+<<<<<<< HEAD
 import ContactForm from    './pages/Contact'
+=======
+import BestPractices from './pages/Bestpractices';
+>>>>>>> 48ef27268c8fb4557dbbad5a2cf7f9ed83f4b281
 
 // Protected Route Component
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -149,10 +153,17 @@ const AppContent: React.FC = () => {
           />
 
           <Route
+<<<<<<< HEAD
           path="/contact"
           element={
             <AppLayout>
               <ContactForm />
+=======
+          path="/resources/practices"
+          element={
+            <AppLayout>
+              <BestPractices />
+>>>>>>> 48ef27268c8fb4557dbbad5a2cf7f9ed83f4b281
             </AppLayout>
           }
           />
