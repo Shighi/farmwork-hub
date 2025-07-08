@@ -24,6 +24,7 @@ import CookiePolicy from './pages/Cookie';
 import CareerTips from './pages/CareerTips';
 import SafetyGuidelines from './pages/Safety';
 import SuccessStories from './pages/SuccessStories';
+import BestPractices from './pages/Bestpractices';
 
 // Protected Route Component
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -142,6 +143,15 @@ const AppContent: React.FC = () => {
           element={
             <AppLayout>
               <SuccessStories />
+            </AppLayout>
+          }
+          />
+
+          <Route
+          path="/resources/practices"
+          element={
+            <AppLayout>
+              <BestPractices />
             </AppLayout>
           }
           />
