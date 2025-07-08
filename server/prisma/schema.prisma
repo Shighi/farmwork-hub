@@ -36,6 +36,7 @@ model User {
   sentRatings      Rating[]      @relation("RatingFrom")
   receivedRatings  Rating[]      @relation("RatingTo")
   messages         Message[]
+  consentRecords   Consent[]     @relation("UserConsents")
   
   @@map("users")
 }
@@ -149,6 +150,37 @@ model AdminSettings {
   @@map("admin_settings")
 }
 
+model Consent {
+  id            String        @id @default(cuid())
+  userId        String?       // Optional - can be null for anonymous consents
+  sessionId     String        @unique
+  consentType   ConsentType   @default(GENERAL)
+  purpose       String        // Purpose of data collection
+  status        ConsentStatus @default(PENDING)
+  ipAddress     String?
+  userAgent     String?
+  location      String?       // Geographic location
+  language      String?       // User's preferred language
+  consentText   String        // The actual consent text shown to user
+  version       String        @default("1.0") // Consent version for tracking changes
+  metadata      Json?         // Additional metadata (browser info, etc.)
+  givenAt       DateTime?     // When consent was given
+  revokedAt     DateTime?     // When consent was revoked
+  expiresAt     DateTime?     // When consent expires (if applicable)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  // Relations
+  user          User?         @relation("UserConsents", fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([sessionId])
+  @@index([consentType])
+  @@index([status])
+  @@index([createdAt])
+  @@map("consents")
+}
+
 // Enums
 enum UserType {
   WORKER
@@ -188,4 +220,26 @@ enum TransactionStatus {
   COMPLETED
   FAILED
   REFUNDED
+}
+
+enum ConsentType {
+  GENERAL          // General data processing consent
+  MARKETING        // Marketing communications
+  ANALYTICS        // Website analytics
+  COOKIES          // Cookie usage
+  LOCATION         // Location data
+  PROFILE_DATA     // Profile information
+  JOB_MATCHING     // Job matching algorithm
+  COMMUNICATION    // Communication between users
+  PAYMENT          // Payment processing
+  THIRD_PARTY      // Third-party integrations
+}
+
+enum ConsentStatus {
+  PENDING          // Consent requested but not yet given
+  ACCEPTED         // Consent given
+  DECLINED         // Consent declined
+  REVOKED          // Consent revoked after being given
+  EXPIRED          // Consent expired
+  WITHDRAWN        // Consent withdrawn by user
 }
