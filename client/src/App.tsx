@@ -25,6 +25,7 @@ import CareerTips from './pages/CareerTips';
 import SafetyGuidelines from './pages/Safety';
 import SuccessStories from './pages/SuccessStories';
 import BestPractices from './pages/Bestpractices';
+import FAQAccordion from './pages/Faq';
 
 // Protected Route Component
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -152,6 +153,15 @@ const AppContent: React.FC = () => {
           element={
             <AppLayout>
               <BestPractices />
+            </AppLayout>
+          }
+          />
+
+          <Route
+          path="/faq"
+          element={
+            <AppLayout>
+              <FAQAccordion />
             </AppLayout>
           }
           />
