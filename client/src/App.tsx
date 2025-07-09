@@ -28,6 +28,7 @@ import SuccessStories from './pages/SuccessStories';
 import ContactForm from './pages/Contact';
 import BestPractices from './pages/Bestpractices';
 import FAQAccordion from './pages/Faq';
+import Resumeform from './pages/ResumeBuilder';
 
 // Auth Protection
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -177,6 +178,15 @@ const AppContent: React.FC = () => {
           element={
             <AppLayout>
               <FAQAccordion />
+            </AppLayout>
+          }
+          />
+          
+          <Route
+          path="/tools/resume-builder"
+          element={
+            <AppLayout>
+              <Resumeform />
             </AppLayout>
           }
           />
