@@ -32,6 +32,7 @@ import Resumeform from './pages/ResumeBuilder';
 
 // Auth Protection
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import RecruitmentTips from './pages/RecruitmentTips';
 
 // Layout wrapper with Header, Footer & CookieBanner
 const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -181,12 +182,21 @@ const AppContent: React.FC = () => {
             </AppLayout>
           }
           />
-          
+
           <Route
           path="/tools/resume-builder"
           element={
             <AppLayout>
               <Resumeform />
+            </AppLayout>
+          }
+          />
+
+          <Route
+          path="/resources/recruitment"
+          element={
+            <AppLayout>
+              <RecruitmentTips />
             </AppLayout>
           }
           />
