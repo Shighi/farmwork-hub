@@ -27,7 +27,7 @@ import CookiePolicy from './pages/Cookie';
 import CareerTips from './pages/CareerTips';
 import SafetyGuidelines from './pages/Safety';
 import SuccessStories from './pages/SuccessStories';
-import ContactForm from './pages/Contact';
+import ContactForm from './pages/ContactUs';
 import BestPractices from './pages/Bestpractices';
 import FAQAccordion from './pages/Faq';
 import Resumeform from './pages/ResumeBuilder';

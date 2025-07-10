@@ -16,7 +16,6 @@ export interface Job {
   requirements: string;
   employerId: string;
   employer?: User;
-  // Add company property to match the usage in JobApplication
   company?: string;
   status: 'active' | 'filled' | 'expired' | 'cancelled';
   isBoosted: boolean;
@@ -57,24 +56,23 @@ export interface UpdateJobData extends Partial<CreateJobData> {
   status?: 'active' | 'filled' | 'expired' | 'cancelled';
 }
 
+export interface SalaryRange {
+  min: number;
+  max: number;
+}
+
 export interface JobFilters {
   search?: string;
-  category?: string;
   location?: string;
+  category?: string;
   jobType?: string;
   salaryType?: string;
-  salaryRange?: {
-    min: number;
-    max: number;
-  };
-  // Add the missing salary filter properties
-  salaryMin?: number;
-  salaryMax?: number;
+  salaryRange?: SalaryRange;
   minSalary?: number;
   maxSalary?: number;
   skills?: string[];
-  sortBy?: 'newest' | 'oldest' | 'salary-high' | 'salary-low' | 'location' | 'createdAt' | 'salary' | 'title';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: 'newest' | 'oldest' | 'salary-high' | 'salary-low' | 'location' | 'title' | 'createdAt' | 'salary';
+  sortOrder?: string;
   page?: number;
   limit?: number;
 }
@@ -171,7 +169,6 @@ export const AFRICAN_LOCATIONS = [
   'Lomé, Togo',
 ] as const;
 
-// Sort options for the filter component
 export const SORT_OPTIONS = [
   { value: 'newest', label: 'Most Recent' },
   { value: 'oldest', label: 'Oldest First' },
@@ -181,5 +178,4 @@ export const SORT_OPTIONS = [
   { value: 'title', label: 'By Title' },
 ] as const;
 
-// Type for sort option values
 export type SortOption = typeof SORT_OPTIONS[number]['value'];
