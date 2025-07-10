@@ -24,6 +24,15 @@ const register = catchAsync(async (req, res, next) => {
 
   const hashedPassword = await bcrypt.hash(password, 12);
 
+  // Convert userType to uppercase to match Prisma enum
+  const normalizedUserType = userType?.toUpperCase();
+  
+  // Validate userType
+  const validUserTypes = ['WORKER', 'EMPLOYER', 'ADMIN']; // Adjust based on your schema
+  if (!validUserTypes.includes(normalizedUserType)) {
+    return next(new AppError('Invalid user type', 400));
+  }
+
   const user = await prisma.user.create({
     data: {
       email,
@@ -32,7 +41,7 @@ const register = catchAsync(async (req, res, next) => {
       lastName,
       phoneNumber,
       location,
-      userType,
+      userType: normalizedUserType, // Use normalized userType
       isVerified: false,
       rating: 0,
       totalRatings: 0

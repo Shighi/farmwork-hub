@@ -1,31 +1,24 @@
 // src/services/auth.ts
 import apiService from './api';
 import { LoginCredentials, RegisterData, User } from '../types/auth';
-import { demoUsers } from '../data/demoData';
+import { API_ENDPOINTS, STORAGE_KEYS } from '../utils/constants';
 
 export class AuthService {
-  private isUsingDemo = process.env.NODE_ENV === 'development' || !process.env.REACT_APP_API_URL;
+  private isUsingDemo = process.env.NODE_ENV === 'development' && !process.env.REACT_APP_API_URL;
 
   async login(credentials: LoginCredentials): Promise<{ user: User; token: string }> {
-    if (this.isUsingDemo) {
-      // Demo mode - simulate login
-      const user = demoUsers.find(u => u.email === credentials.email);
-      if (!user) {
-        throw new Error('Invalid email or password');
-      }
-      
-      // In demo mode, accept any password for simplicity
-      const token = `demo-token-${user.id}`;
-      apiService.setToken(token);
-      
-      return { user, token };
-    }
-
     try {
-      const response = await apiService.post<{ user: User; token: string }>('/auth/login', credentials);
+      const response = await apiService.post<{ user: User; token: string }>(
+        API_ENDPOINTS.AUTH.LOGIN, 
+        credentials
+      );
       
       if (response.success && response.data.token) {
+        // Store both tokens
         apiService.setToken(response.data.token);
+        localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.token);
+        localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(response.data.user));
+        
         return response.data;
       }
       
@@ -36,45 +29,18 @@ export class AuthService {
   }
 
   async register(userData: RegisterData): Promise<{ user: User; token: string }> {
-    if (this.isUsingDemo) {
-      // Demo mode - simulate registration
-      const existingUser = demoUsers.find(u => u.email === userData.email);
-      if (existingUser) {
-        throw new Error('Email already exists');
-      }
-
-      const newUser: User = {
-        id: `demo-${Date.now()}`,
-        email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        phoneNumber: userData.phoneNumber || '',
-        location: userData.location || '',
-        userType: userData.userType,
-        profilePicture: '',
-        bio: '',
-        skills: [],
-        isVerified: false,
-        rating: 0,
-        totalRatings: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      const token = `demo-token-${newUser.id}`;
-      apiService.setToken(token);
-      
-      // In a real app, you'd add this to your backend
-      demoUsers.push(newUser);
-      
-      return { user: newUser, token };
-    }
-
     try {
-      const response = await apiService.post<{ user: User; token: string }>('/auth/register', userData);
+      const response = await apiService.post<{ user: User; token: string }>(
+        API_ENDPOINTS.AUTH.REGISTER, 
+        userData
+      );
       
       if (response.success && response.data.token) {
+        // Store both tokens
         apiService.setToken(response.data.token);
+        localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.token);
+        localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(response.data.user));
+        
         return response.data;
       }
       
@@ -85,61 +51,36 @@ export class AuthService {
   }
 
   async getCurrentUser(): Promise<User> {
-    if (this.isUsingDemo) {
-      // Demo mode - get user from token
-      const token = localStorage.getItem('token');
-      if (!token || !token.startsWith('demo-token-')) {
-        throw new Error('No valid session');
-      }
-      
-      const userId = token.replace('demo-token-', '');
-      const user = demoUsers.find(u => u.id === userId);
-      
-      if (!user) {
-        throw new Error('User not found');
-      }
-      
-      return user;
-    }
-
     try {
-      const response = await apiService.get<User>('/auth/me');
+      const response = await apiService.get<User>(API_ENDPOINTS.AUTH.ME);
       
       if (response.success) {
+        // Update stored user data
+        localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(response.data));
         return response.data;
       }
       
       throw new Error(response.message || 'Failed to get user');
     } catch (error) {
+      // If token is invalid, clear storage
+      this.clearAuthData();
       throw error instanceof Error ? error : new Error('Failed to get user');
     }
   }
 
   async logout(): Promise<void> {
-    if (this.isUsingDemo) {
-      // Demo mode - just clear token
-      apiService.removeToken();
-      return;
-    }
-
     try {
-      await apiService.post('/auth/logout');
+      await apiService.post(API_ENDPOINTS.AUTH.LOGOUT);
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      apiService.removeToken();
+      this.clearAuthData();
     }
   }
 
   async forgotPassword(email: string): Promise<void> {
-    if (this.isUsingDemo) {
-      // Demo mode - simulate success
-      console.log('Demo: Password reset email sent to', email);
-      return;
-    }
-
     try {
-      const response = await apiService.post('/auth/forgot-password', { email });
+      const response = await apiService.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { email });
       
       if (!response.success) {
         throw new Error(response.message || 'Password reset failed');
@@ -150,14 +91,11 @@ export class AuthService {
   }
 
   async resetPassword(token: string, password: string): Promise<void> {
-    if (this.isUsingDemo) {
-      // Demo mode - simulate success
-      console.log('Demo: Password reset successful');
-      return;
-    }
-
     try {
-      const response = await apiService.post('/auth/reset-password', { token, password });
+      const response = await apiService.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, { 
+        token, 
+        password 
+      });
       
       if (!response.success) {
         throw new Error(response.message || 'Password reset failed');
@@ -167,9 +105,50 @@ export class AuthService {
     }
   }
 
+  async refreshToken(): Promise<string> {
+    try {
+      const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+      if (!refreshToken) {
+        throw new Error('No refresh token available');
+      }
+
+      const response = await apiService.post<{ token: string }>(
+        API_ENDPOINTS.AUTH.REFRESH_TOKEN,
+        { refreshToken }
+      );
+      
+      if (response.success && response.data.token) {
+        apiService.setToken(response.data.token);
+        localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.token);
+        return response.data.token;
+      }
+      
+      throw new Error(response.message || 'Token refresh failed');
+    } catch (error) {
+      this.clearAuthData();
+      throw error instanceof Error ? error : new Error('Token refresh failed');
+    }
+  }
+
   isAuthenticated(): boolean {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
     return !!token;
+  }
+
+  getStoredUser(): User | null {
+    try {
+      const userData = localStorage.getItem(STORAGE_KEYS.USER_DATA);
+      return userData ? JSON.parse(userData) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private clearAuthData(): void {
+    apiService.removeToken();
+    localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.USER_DATA);
   }
 }
 

@@ -9,7 +9,7 @@ export const APP_CONFIG = {
 };
 
 // API Base URL - adjust based on your environment
-export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000';
+export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
 
 // Pagination constants
 export const PAGINATION = {
@@ -198,41 +198,66 @@ export const USER_TYPES = {
   ADMIN: 'admin'
 };
 
-// API endpoints
+// API endpoints - Updated to match your backend routes exactly
 export const API_ENDPOINTS = {
   AUTH: {
-    REGISTER: '/api/auth/register',
-    LOGIN: '/api/auth/login',
-    LOGOUT: '/api/auth/logout',
-    ME: '/api/auth/me',
-    FORGOT_PASSWORD: '/api/auth/forgot-password',
-    RESET_PASSWORD: '/api/auth/reset-password',
-    REFRESH_TOKEN: '/api/auth/refresh'
+    REGISTER: '/auth/register',
+    LOGIN: '/auth/login',
+    LOGOUT: '/auth/logout',
+    ME: '/auth/me',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password',
+    REFRESH_TOKEN: '/auth/refresh-token'
   },
   JOBS: {
-    LIST: '/api/jobs',
-    CREATE: '/api/jobs',
-    DETAIL: (id: string) => `/api/jobs/${id}`,
-    UPDATE: (id: string) => `/api/jobs/${id}`,
-    DELETE: (id: string) => `/api/jobs/${id}`,
-    APPLY: (id: string) => `/api/jobs/${id}/apply`,
-    MY_JOBS: '/api/jobs/my-jobs',
-    FEATURED: '/api/jobs/featured',
-    SEARCH: '/api/jobs/search'
+    LIST: '/jobs',
+    CREATE: '/jobs',
+    DETAIL: (id: string) => `/jobs/${id}`,
+    UPDATE: (id: string) => `/jobs/${id}`,
+    DELETE: (id: string) => `/jobs/${id}`,
+    APPLY: (id: string) => `/jobs/${id}/apply`,
+    // Fixed: Backend uses '/jobs/my-jobs/posted' not '/jobs/my-jobs'
+    MY_POSTED_JOBS: '/jobs/my-jobs/posted',
+    // Fixed: Backend uses '/jobs/my-jobs/applied' not a separate endpoint
+    MY_APPLIED_JOBS: '/jobs/my-jobs/applied',
+    FEATURED: '/jobs/featured',
+    SEARCH: '/jobs/search',
+    // Admin routes
+    BOOST: (id: string) => `/jobs/${id}/boost`,
+    FEATURE: (id: string) => `/jobs/${id}/feature`
   },
   APPLICATIONS: {
-    LIST: '/api/applications',
-    DETAIL: (id: string) => `/api/applications/${id}`,
-    UPDATE: (id: string) => `/api/applications/${id}`,
-    WITHDRAW: (id: string) => `/api/applications/${id}`,
-    BY_JOB: (jobId: string) => `/api/applications/job/${jobId}`
+    // Fixed: Backend uses '/' for worker's own applications, not '/applications'
+    MY_APPLICATIONS: '/',
+    DETAIL: (id: string) => `/${id}`,
+    // Fixed: Backend uses DELETE for withdrawal, not a separate endpoint
+    WITHDRAW: (id: string) => `/${id}`,
+    // Fixed: Backend uses '/job/:jobId' not '/job/${jobId}'
+    BY_JOB: (jobId: string) => `/job/${jobId}`,
+    // Fixed: Backend uses PUT for status updates
+    UPDATE_STATUS: (id: string) => `/${id}`,
+    // Admin route
+    ALL: '/all'
   },
   USERS: {
-    PROFILE: '/api/users/profile',
-    UPDATE_PROFILE: '/api/users/profile',
-    UPLOAD_AVATAR: '/api/users/upload-avatar',
-    RATING: (id: string) => `/api/users/${id}/rating`,
-    RATE_USER: (id: string) => `/api/users/${id}/rate`
+    PROFILE: '/users/profile',
+    UPDATE_PROFILE: '/users/profile',
+    UPLOAD_AVATAR: '/users/upload-avatar',
+    STATS: '/users/stats',
+    APPLICATIONS: '/users/applications',
+    POSTED_JOBS: '/users/posted-jobs',
+    WORK_HISTORY: '/users/work-history',
+    UPDATE_PASSWORD: '/users/password',
+    DELETE_ACCOUNT: '/users/account',
+    RATING: (id: string) => `/users/${id}/rating`,
+    RATE_USER: (id: string) => `/users/${id}/rate`,
+    WORKERS: '/users/workers',
+    EMPLOYERS: '/users/employers',
+    // Admin routes
+    ALL_USERS: '/users/all',
+    VERIFY_USER: (id: string) => `/users/${id}/verify`,
+    SUSPEND_USER: (id: string) => `/users/${id}/suspend`,
+    ACTIVATE_USER: (id: string) => `/users/${id}/activate`
   }
 };
 
@@ -255,18 +280,18 @@ export const VALIDATION_RULES = {
   BIO_MAX_LENGTH: 500,
   JOB_TITLE_MAX_LENGTH: 100,
   JOB_DESCRIPTION_MAX_LENGTH: 2000,
-  COVER_LETTER_MAX_LENGTH: 1500, // Added missing property
+  COVER_LETTER_MAX_LENGTH: 1500,
   PHONE_REGEX: /^[\+]?[0-9\s\-\(\)]{10,15}$/,
   EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  EMAIL_PATTERN: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, // Added missing property (alias for EMAIL_REGEX)
-  MAX_FILE_SIZE: 5 * 1024 * 1024, // Added missing property (5MB)
-  ALLOWED_IMAGE_TYPES: [ // Added missing property
+  EMAIL_PATTERN: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
+  ALLOWED_IMAGE_TYPES: [
     'image/jpeg',
     'image/jpg', 
     'image/png',
     'image/webp'
   ],
-  ALLOWED_DOCUMENT_TYPES: [ // Added missing property
+  ALLOWED_DOCUMENT_TYPES: [
     'application/pdf',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document'

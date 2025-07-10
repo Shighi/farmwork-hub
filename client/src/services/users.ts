@@ -2,7 +2,7 @@
 import apiService from './api';
 import { User } from '../types/auth';
 import { JobApplication } from '../types/jobs';
-import { demoUsers, demoApplications } from '../data/demoData';
+import { API_ENDPOINTS } from '../utils/constants';
 
 export interface UpdateProfileData {
   firstName?: string;
@@ -27,6 +27,16 @@ export interface UserRating {
   createdAt: string;
 }
 
+export interface UserStats {
+  totalApplications: number;
+  acceptedApplications: number;
+  rejectedApplications: number;
+  pendingApplications: number;
+  totalJobsPosted?: number;
+  activeJobsPosted?: number;
+  totalHires?: number;
+}
+
 export interface Notification {
   id: string;
   type: 'application' | 'job_match' | 'rating' | 'message' | 'system';
@@ -43,22 +53,9 @@ export interface Notification {
 }
 
 export class UsersService {
-  private isUsingDemo = process.env.NODE_ENV === 'development' || !process.env.REACT_APP_API_URL;
-
   async getProfile(userId?: string): Promise<User> {
-    if (this.isUsingDemo) {
-      const targetUserId = userId || 'demo-user-1'; // Default to current user
-      const user = demoUsers.find(u => u.id === targetUserId);
-      
-      if (!user) {
-        throw new Error('User not found');
-      }
-      
-      return user;
-    }
-
     try {
-      const endpoint = userId ? `/users/${userId}` : '/users/profile';
+      const endpoint = userId ? `/users/${userId}` : API_ENDPOINTS.USERS.PROFILE;
       const response = await apiService.get<User>(endpoint);
       
       if (response.success) {
@@ -72,26 +69,12 @@ export class UsersService {
   }
 
   async updateProfile(data: UpdateProfileData): Promise<User> {
-    if (this.isUsingDemo) {
-      const userIndex = demoUsers.findIndex(u => u.id === 'demo-user-1');
-      if (userIndex === -1) {
-        throw new Error('User not found');
-      }
-
-      const updatedUser: User = {
-        ...demoUsers[userIndex],
-        ...data,
-        updatedAt: new Date().toISOString(),
-      };
-
-      demoUsers[userIndex] = updatedUser;
-      return updatedUser;
-    }
-
     try {
-      const response = await apiService.put<User>('/users/profile', data);
+      const response = await apiService.put<User>(API_ENDPOINTS.USERS.UPDATE_PROFILE, data);
       
       if (response.success) {
+        // Update stored user data
+        localStorage.setItem('farmwork_user_data', JSON.stringify(response.data));
         return response.data;
       }
       
@@ -102,25 +85,12 @@ export class UsersService {
   }
 
   async uploadAvatar(file: File): Promise<{ profilePicture: string }> {
-    if (this.isUsingDemo) {
-      // In demo mode, simulate upload by creating a object URL
-      const profilePicture = URL.createObjectURL(file);
-      
-      // Update demo user's profile picture
-      const userIndex = demoUsers.findIndex(u => u.id === 'demo-user-1');
-      if (userIndex !== -1) {
-        demoUsers[userIndex].profilePicture = profilePicture;
-      }
-      
-      return { profilePicture };
-    }
-
     try {
       const formData = new FormData();
       formData.append('avatar', file);
 
       const response = await apiService.uploadFile<{ profilePicture: string }>(
-        '/users/upload-avatar',
+        API_ENDPOINTS.USERS.UPLOAD_AVATAR,
         formData
       );
       
@@ -134,14 +104,23 @@ export class UsersService {
     }
   }
 
-  async getApplications(): Promise<JobApplication[]> {
-    if (this.isUsingDemo) {
-      // Return applications for current demo user
-      return demoApplications.filter(app => app.applicantId === 'demo-user-1');
-    }
-
+  async getUserStats(): Promise<UserStats> {
     try {
-      const response = await apiService.get<JobApplication[]>('/applications');
+      const response = await apiService.get<UserStats>(API_ENDPOINTS.USERS.STATS);
+      
+      if (response.success) {
+        return response.data;
+      }
+      
+      throw new Error(response.message || 'Failed to fetch user stats');
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('Failed to fetch user stats');
+    }
+  }
+
+  async getApplications(): Promise<JobApplication[]> {
+    try {
+      const response = await apiService.get<JobApplication[]>(API_ENDPOINTS.USERS.APPLICATIONS);
       
       if (response.success) {
         return response.data;
@@ -153,118 +132,65 @@ export class UsersService {
     }
   }
 
-  async getApplication(id: string): Promise<JobApplication> {
-    if (this.isUsingDemo) {
-      const application = demoApplications.find(app => app.id === id);
-      if (!application) {
-        throw new Error('Application not found');
-      }
-      return application;
-    }
-
+  async getPostedJobs(): Promise<any[]> {
     try {
-      const response = await apiService.get<JobApplication>(`/applications/${id}`);
+      const response = await apiService.get<any[]>(API_ENDPOINTS.USERS.POSTED_JOBS);
       
       if (response.success) {
         return response.data;
       }
       
-      throw new Error(response.message || 'Failed to fetch application');
+      throw new Error(response.message || 'Failed to fetch posted jobs');
     } catch (error) {
-      throw error instanceof Error ? error : new Error('Failed to fetch application');
+      throw error instanceof Error ? error : new Error('Failed to fetch posted jobs');
     }
   }
 
-  async updateApplicationStatus(id: string, status: JobApplication['status']): Promise<JobApplication> {
-    if (this.isUsingDemo) {
-      const appIndex = demoApplications.findIndex(app => app.id === id);
-      if (appIndex === -1) {
-        throw new Error('Application not found');
-      }
-
-      const updatedApplication: JobApplication = {
-        ...demoApplications[appIndex],
-        status,
-        updatedAt: new Date().toISOString(),
-      };
-
-      demoApplications[appIndex] = updatedApplication;
-      return updatedApplication;
-    }
-
+  async getWorkHistory(): Promise<any[]> {
     try {
-      const response = await apiService.put<JobApplication>(`/applications/${id}`, { status });
+      const response = await apiService.get<any[]>(API_ENDPOINTS.USERS.WORK_HISTORY);
       
       if (response.success) {
         return response.data;
       }
       
-      throw new Error(response.message || 'Failed to update application');
+      throw new Error(response.message || 'Failed to fetch work history');
     } catch (error) {
-      throw error instanceof Error ? error : new Error('Failed to update application');
+      throw error instanceof Error ? error : new Error('Failed to fetch work history');
     }
   }
 
-  async withdrawApplication(id: string): Promise<void> {
-    if (this.isUsingDemo) {
-      const appIndex = demoApplications.findIndex(app => app.id === id);
-      if (appIndex === -1) {
-        throw new Error('Application not found');
-      }
-
-      demoApplications[appIndex].status = 'withdrawn';
-      demoApplications[appIndex].updatedAt = new Date().toISOString();
-      return;
-    }
-
+  async updatePassword(currentPassword: string, newPassword: string): Promise<void> {
     try {
-      const response = await apiService.delete(`/applications/${id}`);
+      const response = await apiService.put(API_ENDPOINTS.USERS.UPDATE_PASSWORD, {
+        currentPassword,
+        newPassword
+      });
       
       if (!response.success) {
-        throw new Error(response.message || 'Failed to withdraw application');
+        throw new Error(response.message || 'Failed to update password');
       }
     } catch (error) {
-      throw error instanceof Error ? error : new Error('Failed to withdraw application');
+      throw error instanceof Error ? error : new Error('Failed to update password');
+    }
+  }
+
+  async deleteAccount(): Promise<void> {
+    try {
+      const response = await apiService.delete(API_ENDPOINTS.USERS.DELETE_ACCOUNT);
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to delete account');
+      }
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('Failed to delete account');
     }
   }
 
   async getUserRating(userId: string): Promise<{ rating: number; totalRatings: number; reviews: UserRating[] }> {
-    if (this.isUsingDemo) {
-      const user = demoUsers.find(u => u.id === userId);
-      if (!user) {
-        throw new Error('User not found');
-      }
-
-      // Mock reviews data
-      const reviews: UserRating[] = [
-        {
-          id: '1',
-          raterId: 'demo-employer-1',
-          ratedUserId: userId,
-          rating: 5,
-          comment: 'Excellent worker, very reliable and skilled.',
-          createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-        },
-        {
-          id: '2',
-          raterId: 'demo-employer-2',
-          ratedUserId: userId,
-          rating: 4,
-          comment: 'Good work ethic and punctual.',
-          createdAt: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-        },
-      ];
-
-      return {
-        rating: user.rating,
-        totalRatings: user.totalRatings,
-        reviews: reviews,
-      };
-    }
-
     try {
       const response = await apiService.get<{ rating: number; totalRatings: number; reviews: UserRating[] }>(
-        `/users/${userId}/rating`
+        API_ENDPOINTS.USERS.RATING(userId)
       );
       
       if (response.success) {
@@ -278,36 +204,11 @@ export class UsersService {
   }
 
   async rateUser(userId: string, rating: number, comment: string): Promise<UserRating> {
-    if (this.isUsingDemo) {
-      const newRating: UserRating = {
-        id: `rating-${Date.now()}`,
-        raterId: 'demo-user-1', // Current user
-        ratedUserId: userId,
-        rating,
-        comment,
-        createdAt: new Date().toISOString(),
-      };
-
-      // Update user's rating (simplified calculation)
-      const userIndex = demoUsers.findIndex(u => u.id === userId);
-      if (userIndex !== -1) {
-        const user = demoUsers[userIndex];
-        const newTotalRatings = user.totalRatings + 1;
-        const newAverageRating = ((user.rating * user.totalRatings) + rating) / newTotalRatings;
-        
-        demoUsers[userIndex] = {
-          ...user,
-          rating: Math.round(newAverageRating * 10) / 10, // Round to 1 decimal
-          totalRatings: newTotalRatings,
-          updatedAt: new Date().toISOString(),
-        };
-      }
-
-      return newRating;
-    }
-
     try {
-      const response = await apiService.post<UserRating>(`/users/${userId}/rate`, { rating, comment });
+      const response = await apiService.post<UserRating>(
+        API_ENDPOINTS.USERS.RATE_USER(userId), 
+        { rating, comment }
+      );
       
       if (response.success) {
         return response.data;
@@ -319,23 +220,77 @@ export class UsersService {
     }
   }
 
-  async searchUsers(query: string, userType?: 'worker' | 'employer'): Promise<User[]> {
-    if (this.isUsingDemo) {
-      let users = demoUsers.filter(user => {
-        const matchesQuery = query === '' || 
-          user.firstName.toLowerCase().includes(query.toLowerCase()) ||
-          user.lastName.toLowerCase().includes(query.toLowerCase()) ||
-          user.location.toLowerCase().includes(query.toLowerCase()) ||
-          user.skills.some(skill => skill.toLowerCase().includes(query.toLowerCase()));
-        
-        const matchesType = !userType || user.userType === userType;
-        
-        return matchesQuery && matchesType;
-      });
+  async getWorkers(filters?: { 
+    search?: string; 
+    skills?: string[]; 
+    location?: string; 
+    experience?: string;
+    rating?: number;
+  }): Promise<User[]> {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== '' && value !== null) {
+            if (Array.isArray(value)) {
+              value.forEach(item => queryParams.append(key, item.toString()));
+            } else {
+              queryParams.append(key, value.toString());
+            }
+          }
+        });
+      }
 
-      return users;
+      const endpoint = queryParams.toString() 
+        ? `${API_ENDPOINTS.USERS.WORKERS}?${queryParams.toString()}` 
+        : API_ENDPOINTS.USERS.WORKERS;
+        
+      const response = await apiService.get<User[]>(endpoint);
+      
+      if (response.success) {
+        return response.data;
+      }
+      
+      throw new Error(response.message || 'Failed to fetch workers');
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('Failed to fetch workers');
     }
+  }
 
+  async getEmployers(filters?: { 
+    search?: string; 
+    location?: string; 
+    rating?: number;
+  }): Promise<User[]> {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== '' && value !== null) {
+            queryParams.append(key, value.toString());
+          }
+        });
+      }
+
+      const endpoint = queryParams.toString() 
+        ? `${API_ENDPOINTS.USERS.EMPLOYERS}?${queryParams.toString()}` 
+        : API_ENDPOINTS.USERS.EMPLOYERS;
+        
+      const response = await apiService.get<User[]>(endpoint);
+      
+      if (response.success) {
+        return response.data;
+      }
+      
+      throw new Error(response.message || 'Failed to fetch employers');
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('Failed to fetch employers');
+    }
+  }
+
+  async searchUsers(query: string, userType?: 'worker' | 'employer'): Promise<User[]> {
     try {
       const queryParams = new URLSearchParams();
       queryParams.append('q', query);
@@ -343,7 +298,13 @@ export class UsersService {
         queryParams.append('type', userType);
       }
 
-      const response = await apiService.get<User[]>(`/users/search?${queryParams.toString()}`);
+      const endpoint = userType === 'worker' 
+        ? `${API_ENDPOINTS.USERS.WORKERS}?${queryParams.toString()}`
+        : userType === 'employer'
+        ? `${API_ENDPOINTS.USERS.EMPLOYERS}?${queryParams.toString()}`
+        : `/users/search?${queryParams.toString()}`;
+
+      const response = await apiService.get<User[]>(endpoint);
       
       if (response.success) {
         return response.data;
@@ -355,90 +316,9 @@ export class UsersService {
     }
   }
 
-  async getEmployerJobs(employerId: string): Promise<any[]> {
-    if (this.isUsingDemo) {
-      // This would typically be imported from jobs service, but to avoid circular dependency
-      // we'll return a simple response
-      return [];
-    }
-
+  async getNotifications(): Promise<Notification[]> {
     try {
-      const response = await apiService.get<any[]>(`/users/${employerId}/jobs`);
-      
-      if (response.success) {
-        return response.data;
-      }
-      
-      throw new Error(response.message || 'Failed to fetch employer jobs');
-    } catch (error) {
-      throw error instanceof Error ? error : new Error('Failed to fetch employer jobs');
-    }
-  }
-
-  async verifyUser(userId: string): Promise<User> {
-    if (this.isUsingDemo) {
-      const userIndex = demoUsers.findIndex(u => u.id === userId);
-      if (userIndex === -1) {
-        throw new Error('User not found');
-      }
-
-
-      const updatedUser: User = {
-        ...demoUsers[userIndex],
-        isVerified: true,
-        updatedAt: new Date().toISOString(),
-      };
-
-      demoUsers[userIndex] = updatedUser;
-      return updatedUser;
-    }
-
-    try {
-      const response = await apiService.post<User>(`/users/${userId}/verify`);
-      
-      if (response.success) {
-        return response.data;
-      }
-      
-      throw new Error(response.message || 'Failed to verify user');
-    } catch (error) {
-      throw error instanceof Error ? error : new Error('Failed to verify user');
-    }
-  }
-
-  async getNotifications(): Promise<any[]> {
-    if (this.isUsingDemo) {
-      // Mock notifications
-      return [
-        {
-          id: '1',
-          type: 'application',
-          title: 'New job application',
-          message: 'Someone applied for your Farm Manager position',
-          isRead: false,
-          createdAt: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-        },
-        {
-          id: '2',
-          type: 'job_match',
-          title: 'New job matches your skills',
-          message: 'Check out this Agriculture Technician position in Nairobi',
-          isRead: false,
-          createdAt: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
-        },
-        {
-          id: '3',
-          type: 'rating',
-          title: 'You received a new rating',
-          message: 'John Doe rated you 5 stars for your excellent work',
-          isRead: true,
-          createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-        },
-      ];
-    }
-
-    try {
-      const response = await apiService.get<any[]>('/users/notifications');
+      const response = await apiService.get<Notification[]>('/users/notifications');
       
       if (response.success) {
         return response.data;
@@ -452,16 +332,98 @@ export class UsersService {
   }
 
   async markNotificationAsRead(notificationId: string): Promise<void> {
-    if (this.isUsingDemo) {
-      // In demo mode, just log the action
-      console.log('Marked notification as read:', notificationId);
-      return;
-    }
-
     try {
       await apiService.put(`/users/notifications/${notificationId}/read`);
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
+    }
+  }
+
+  async markAllNotificationsAsRead(): Promise<void> {
+    try {
+      await apiService.put('/users/notifications/read-all');
+    } catch (error) {
+      console.error('Failed to mark all notifications as read:', error);
+    }
+  }
+
+  // Admin functions
+  async getAllUsers(filters?: { 
+    search?: string; 
+    userType?: string; 
+    isVerified?: boolean;
+    page?: number;
+    limit?: number;
+  }): Promise<{ users: User[]; total: number; page: number; limit: number }> {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== '' && value !== null) {
+            queryParams.append(key, value.toString());
+          }
+        });
+      }
+
+      const endpoint = queryParams.toString() 
+        ? `${API_ENDPOINTS.USERS.ALL_USERS}?${queryParams.toString()}` 
+        : API_ENDPOINTS.USERS.ALL_USERS;
+        
+      const response = await apiService.get<{ users: User[]; total: number; page: number; limit: number }>(endpoint);
+      
+      if (response.success) {
+        return response.data;
+      }
+      
+      throw new Error(response.message || 'Failed to fetch users');
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('Failed to fetch users');
+    }
+  }
+
+  async verifyUser(userId: string): Promise<User> {
+    try {
+      const response = await apiService.post<User>(API_ENDPOINTS.USERS.VERIFY_USER(userId));
+      
+      if (response.success) {
+        return response.data;
+      }
+      
+      throw new Error(response.message || 'Failed to verify user');
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('Failed to verify user');
+    }
+  }
+
+  async suspendUser(userId: string, reason?: string): Promise<User> {
+    try {
+      const response = await apiService.post<User>(
+        API_ENDPOINTS.USERS.SUSPEND_USER(userId),
+        { reason }
+      );
+      
+      if (response.success) {
+        return response.data;
+      }
+      
+      throw new Error(response.message || 'Failed to suspend user');
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('Failed to suspend user');
+    }
+  }
+
+  async activateUser(userId: string): Promise<User> {
+    try {
+      const response = await apiService.post<User>(API_ENDPOINTS.USERS.ACTIVATE_USER(userId));
+      
+      if (response.success) {
+        return response.data;
+      }
+      
+      throw new Error(response.message || 'Failed to activate user');
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('Failed to activate user');
     }
   }
 }

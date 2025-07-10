@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { JobApplication } from '../../types/users';
 import { useAuth } from '../../hooks/useAuth';
-import { usersService } from '../../services/users';
+import applicationsService from '../../services/applications'; // Changed from usersService
 import { formatCurrency, formatDate, formatRelativeTime } from '../../utils/formatters';
 import LoadingSpinner from '../common/LoadingSpinner';
 import Modal from '../common/Modal';
@@ -44,7 +44,7 @@ const ApplicationsList: React.FC<ApplicationsListProps> = ({
 
     try {
       setWithdrawingId(applicationToWithdraw.id);
-      await usersService.withdrawApplication(applicationToWithdraw.id);
+      await applicationsService.withdrawApplication(applicationToWithdraw.id); // Changed from usersService
       
       // Notify parent component about the status change
       if (onApplicationUpdate) {

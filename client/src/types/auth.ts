@@ -24,11 +24,12 @@ export interface User {
   updatedAt: string;
 }
 
+// Updated to match AuthContext implementation
 export interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  loading: boolean;
+  isLoading: boolean; // Changed from 'loading' to 'isLoading' to match context
   error: string | null;
 }
 
@@ -50,10 +51,12 @@ export interface RegisterData {
   skills?: string[];
 }
 
+// Updated to match service implementation
 export interface AuthResponse {
   user: User;
   token: string;
-  message: string;
+  refreshToken?: string; // Added optional refresh token
+  message?: string; // Made optional as it might not always be present
 }
 
 export interface ForgotPasswordData {
@@ -79,4 +82,30 @@ export interface UpdateProfileData {
   preferredJobTypes?: string[];
   expectedSalary?: string;
   availability?: string;
+}
+
+// Additional types that might be useful based on your implementation
+export interface TokenRefreshResponse {
+  token: string;
+  refreshToken?: string;
+}
+
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data: T;
+  message?: string;
+  error?: string;
+}
+
+// Auth context value interface (exported from context, but useful to have here too)
+export interface AuthContextValue extends AuthState {
+  loading: boolean; // Alias for isLoading for backward compatibility
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
+  logout: () => void;
+  updateProfile: (data: Partial<User>) => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (token: string, password: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
+  clearError: () => void;
 }

@@ -14,9 +14,8 @@ const usersRoutes = require('./routes/users');
 const applicationsRoutes = require('./routes/applications');
 const consentRoutes = require('./routes/consent.route');
 
-// Import middleware
-const errorHandler = require('./middleware/errorHandler');
-const { notFound } = require('./middleware/errorHandler');
+// Import middleware - FIXED: Import the correct function
+const { globalErrorHandler, notFound } = require('./middleware/errorHandler');
 
 const app = express();
 
@@ -280,18 +279,8 @@ app.get('/api/debug/routes', (req, res) => {
 // 404 handler
 app.use(notFound);
 
-// Error handling middleware (must be last) - ENHANCED
-app.use((err, req, res, next) => {
-  console.error('Error caught by global handler:', {
-    error: err.message,
-    stack: err.stack,
-    path: req.path,
-    method: req.method,
-    body: req.body
-  });
-  
-  errorHandler(err, req, res, next);
-});
+// Error handling middleware (must be last) - FIXED: Use the correct function
+app.use(globalErrorHandler);
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

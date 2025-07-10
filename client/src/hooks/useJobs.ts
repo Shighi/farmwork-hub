@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Job, JobFilters, JobApplication, ApplyJobData, CreateJobData } from '../types/jobs';
 import { PAGINATION } from '../utils/constants';
 import { demoJobs, demoApplications } from '../data/demoData';
+import { jobsService } from '../services/jobs';
 
 interface UseJobsState {
   jobs: Job[];
@@ -225,24 +226,15 @@ export function useJobs({ filters, pageSize = PAGINATION.DEFAULT_PAGE_SIZE, auto
     }
   }, []);
 
-  // Apply for job function
+  // Updated Apply for job function - now using the actual service
   const applyForJob = useCallback(async (jobId: string, applicationData: ApplyJobData) => {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // In a real app, this would make an API call to submit the application
-      // For demo purposes, we'll just log the application data
-      console.log('Applying for job:', {
-        jobId,
-        applicationData,
-        timestamp: new Date().toISOString()
-      });
-
-      // Simulate success - in a real app, you'd handle the API response
+      // Call the actual API service instead of just console.log
+      const result = await jobsService.applyForJob(jobId, applicationData);
+      
       return {
         success: true,
-        applicationId: `app-${Date.now()}`,
+        applicationId: result.id,
         message: 'Application submitted successfully!'
       };
     } catch (error) {
@@ -284,13 +276,58 @@ export function useJobs({ filters, pageSize = PAGINATION.DEFAULT_PAGE_SIZE, auto
   };
 }
 
+// New dedicated hook for job applications
+export function useJobApplication() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const applyForJob = useCallback(async (jobId: string, applicationData: ApplyJobData) => {
+    setLoading(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      // Call the actual API service
+      const result = await jobsService.applyForJob(jobId, applicationData);
+      
+      setSuccess(true);
+      return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to submit application';
+      setError(errorMessage);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const reset = useCallback(() => {
+    setError(null);
+    setSuccess(false);
+    setLoading(false);
+  }, []);
+
+  return {
+    applyForJob,
+    loading,
+    error,
+    success,
+    reset
+  };
+}
+
+// FIXED: Enhanced useJob hook with better error handling and fallback
 export function useJob(jobId: string) {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchJob = useCallback(async () => {
-    if (!jobId) return;
+    if (!jobId) {
+      setError('Job ID is required');
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -299,14 +336,35 @@ export function useJob(jobId: string) {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      const foundJob = demoJobs.find(j => j.id === jobId);
+      // First try to find the job in demoJobs
+      let foundJob = demoJobs.find(j => j.id === jobId);
+      
+      // If not found, try to find by converting jobId to different formats
       if (!foundJob) {
-        throw new Error('Job not found');
+        // Try to find by ID without prefix
+        const idWithoutPrefix = jobId.replace(/^job-/, '');
+        foundJob = demoJobs.find(j => j.id === idWithoutPrefix || j.id === `job-${idWithoutPrefix}`);
+      }
+      
+      // If still not found, try to find by index (if jobId is a number)
+      if (!foundJob && !isNaN(Number(jobId))) {
+        const index = parseInt(jobId) - 1;
+        if (index >= 0 && index < demoJobs.length) {
+          foundJob = demoJobs[index];
+        }
+      }
+
+      if (!foundJob) {
+        console.error('Job not found. Available jobs:', demoJobs.map(j => ({ id: j.id, title: j.title })));
+        console.error('Looking for job ID:', jobId);
+        throw new Error(`Job with ID "${jobId}" not found`);
       }
 
       setJob(foundJob);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to fetch job');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch job';
+      setError(errorMessage);
+      console.error('Error fetching job:', error);
     } finally {
       setLoading(false);
     }
@@ -324,13 +382,17 @@ export function useJob(jobId: string) {
   };
 }
 
+// Enhanced useJobApplications hook with better error handling
 export function useJobApplications(jobId?: string) {
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchApplications = useCallback(async () => {
-    if (!jobId) return;
+    if (!jobId) {
+      setApplications([]);
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -343,7 +405,9 @@ export function useJobApplications(jobId?: string) {
       const jobApplications = demoApplications.filter(app => app.jobId === jobId);
       setApplications(jobApplications);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to fetch applications');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch applications';
+      setError(errorMessage);
+      console.error('Error fetching applications:', error);
     } finally {
       setLoading(false);
     }
@@ -362,6 +426,7 @@ export function useJobApplications(jobId?: string) {
         )
       );
     } catch (error) {
+      console.error('Error updating application status:', error);
       throw new Error('Failed to update application status');
     }
   }, []);

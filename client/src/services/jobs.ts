@@ -1,76 +1,27 @@
 // src/services/jobs.ts
 import apiService from './api';
 import { Job, JobFilters, CreateJobData, JobApplication } from '../types/jobs';
-import { demoJobs, demoApplications } from '../data/demoData';
+import { API_ENDPOINTS } from '../utils/constants';
+
+
 
 export class JobsService {
-  private isUsingDemo = process.env.NODE_ENV === 'development' || !process.env.REACT_APP_API_URL;
-
   async getJobs(filters?: JobFilters): Promise<Job[]> {
-    if (this.isUsingDemo) {
-      // Demo mode - filter demo jobs
-      let filteredJobs = [...demoJobs];
-
-      if (filters) {
-        if (filters.location) {
-          filteredJobs = filteredJobs.filter(job =>
-            job.location.toLowerCase().includes(filters.location!.toLowerCase())
-          );
-        }
-
-        if (filters.category) {
-          filteredJobs = filteredJobs.filter(job =>
-            job.category.toLowerCase() === filters.category!.toLowerCase()
-          );
-        }
-
-        if (filters.jobType) {
-          filteredJobs = filteredJobs.filter(job =>
-            job.jobType === filters.jobType
-          );
-        }
-
-        // Fixed: Use the correct property names that exist in JobFilters
-        if (filters.salaryMin !== undefined) {
-          filteredJobs = filteredJobs.filter(job =>
-            job.salary >= filters.salaryMin!
-          );
-        }
-
-        if (filters.salaryMax !== undefined) {
-          filteredJobs = filteredJobs.filter(job =>
-            job.salary <= filters.salaryMax!
-          );
-        }
-
-        if (filters.search) {
-          const searchTerm = filters.search.toLowerCase();
-          filteredJobs = filteredJobs.filter(job =>
-            job.title.toLowerCase().includes(searchTerm) ||
-            job.description.toLowerCase().includes(searchTerm) ||
-            job.skills.some(skill => skill.toLowerCase().includes(searchTerm))
-          );
-        }
-      }
-
-      // Sort by creation date (newest first)
-      filteredJobs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-      return filteredJobs;
-    }
-
     try {
       const queryParams = new URLSearchParams();
       
       if (filters) {
         Object.entries(filters).forEach(([key, value]) => {
-          if (value !== undefined && value !== '') {
+          if (value !== undefined && value !== '' && value !== null) {
             queryParams.append(key, value.toString());
           }
         });
       }
 
-      const endpoint = `/jobs${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const endpoint = queryParams.toString() 
+        ? `${API_ENDPOINTS.JOBS.LIST}?${queryParams.toString()}` 
+        : API_ENDPOINTS.JOBS.LIST;
+        
       const response = await apiService.get<Job[]>(endpoint);
       
       if (response.success) {
@@ -84,16 +35,8 @@ export class JobsService {
   }
 
   async getJobById(id: string): Promise<Job> {
-    if (this.isUsingDemo) {
-      const job = demoJobs.find(j => j.id === id);
-      if (!job) {
-        throw new Error('Job not found');
-      }
-      return job;
-    }
-
     try {
-      const response = await apiService.get<Job>(`/jobs/${id}`);
+      const response = await apiService.get<Job>(API_ENDPOINTS.JOBS.DETAIL(id));
       
       if (response.success) {
         return response.data;
@@ -106,42 +49,8 @@ export class JobsService {
   }
 
   async createJob(jobData: CreateJobData): Promise<Job> {
-    if (this.isUsingDemo) {
-      const newJob: Job = {
-        id: `demo-job-${Date.now()}`,
-        ...jobData,
-        employerId: 'demo-employer-1', // In real app, get from auth context
-        // Fixed: Create a proper User object with all required properties
-        employer: {
-          id: 'demo-employer-1',
-          firstName: 'Demo',
-          lastName: 'Employer',
-          email: 'demo.employer@example.com',
-          phoneNumber: '+254700000001',
-          location: 'Nairobi, Kenya',
-          userType: 'employer',
-          profilePicture: '',
-          bio: 'Demo employer account',
-          skills: ['Farm Management'],
-          isVerified: true,
-          rating: 4.5,
-          totalRatings: 10,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        applicationsCount: 0,
-        status: 'active',
-        isBoosted: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      demoJobs.unshift(newJob);
-      return newJob;
-    }
-
     try {
-      const response = await apiService.post<Job>('/jobs', jobData);
+      const response = await apiService.post<Job>(API_ENDPOINTS.JOBS.CREATE, jobData);
       
       if (response.success) {
         return response.data;
@@ -154,24 +63,8 @@ export class JobsService {
   }
 
   async updateJob(id: string, jobData: Partial<CreateJobData>): Promise<Job> {
-    if (this.isUsingDemo) {
-      const jobIndex = demoJobs.findIndex(j => j.id === id);
-      if (jobIndex === -1) {
-        throw new Error('Job not found');
-      }
-
-      const updatedJob: Job = {
-        ...demoJobs[jobIndex],
-        ...jobData,
-        updatedAt: new Date().toISOString(),
-      };
-
-      demoJobs[jobIndex] = updatedJob;
-      return updatedJob;
-    }
-
     try {
-      const response = await apiService.put<Job>(`/jobs/${id}`, jobData);
+      const response = await apiService.put<Job>(API_ENDPOINTS.JOBS.UPDATE(id), jobData);
       
       if (response.success) {
         return response.data;
@@ -184,18 +77,8 @@ export class JobsService {
   }
 
   async deleteJob(id: string): Promise<void> {
-    if (this.isUsingDemo) {
-      const jobIndex = demoJobs.findIndex(j => j.id === id);
-      if (jobIndex === -1) {
-        throw new Error('Job not found');
-      }
-
-      demoJobs.splice(jobIndex, 1);
-      return;
-    }
-
     try {
-      const response = await apiService.delete(`/jobs/${id}`);
+      const response = await apiService.delete(API_ENDPOINTS.JOBS.DELETE(id));
       
       if (!response.success) {
         throw new Error(response.message || 'Failed to delete job');
@@ -205,45 +88,94 @@ export class JobsService {
     }
   }
 
-  async applyForJob(jobId: string, applicationData: { coverLetter?: string; proposedSalary?: number }): Promise<JobApplication> {
-    if (this.isUsingDemo) {
-      const job = demoJobs.find(j => j.id === jobId);
-      if (!job) {
-        throw new Error('Job not found');
-      }
-
-      // Check if already applied
-      const existingApplication = demoApplications.find(
-        app => app.jobId === jobId && app.applicantId === 'demo-user-1'
-      );
-      
-      if (existingApplication) {
-        throw new Error('You have already applied for this job');
-      }
-
-      const newApplication: JobApplication = {
-        id: `demo-app-${Date.now()}`,
-        jobId,
-        applicantId: 'demo-user-1',
-        // Fixed: Use the complete job object
-        job: job,
-        status: 'pending',
-        coverLetter: applicationData.coverLetter || '',
-        proposedSalary: applicationData.proposedSalary,
-        appliedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      demoApplications.push(newApplication);
-      
-      // Update job applications count
-      job.applicationsCount = (job.applicationsCount || 0) + 1;
-
-      return newApplication;
-    }
-
+  // Updated applyForJob method with file upload support
+  async applyForJob(jobId: string, applicationData: { 
+    coverLetter: string; 
+    proposedSalary?: number;
+    resume?: File;
+    additionalDocuments?: File[];
+  }): Promise<JobApplication> {
     try {
-      const response = await apiService.post<JobApplication>(`/jobs/${jobId}/apply`, applicationData);
+      // Check if we have files to upload
+      const hasFiles = applicationData.resume || (applicationData.additionalDocuments && applicationData.additionalDocuments.length > 0);
+      
+      if (hasFiles) {
+        // Use FormData for file uploads
+        const formData = new FormData();
+        
+        formData.append('coverLetter', applicationData.coverLetter);
+        
+        if (applicationData.proposedSalary) {
+          formData.append('proposedSalary', applicationData.proposedSalary.toString());
+        }
+        
+        if (applicationData.resume) {
+          formData.append('resume', applicationData.resume);
+        }
+        
+        if (applicationData.additionalDocuments) {
+          applicationData.additionalDocuments.forEach((file, index) => {
+            formData.append(`additionalDocuments[${index}]`, file);
+          });
+        }
+
+        // Get the API base URL - you'll need to define this constant
+        const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001/api';
+        
+        // Use fetch directly for FormData to handle file uploads
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.JOBS.APPLY(jobId)}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`, // Add auth token
+            // Don't set Content-Type header - let browser set it for FormData
+          },
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+          return result.data;
+        }
+        
+        throw new Error(result.message || 'Failed to apply for job');
+      } else {
+        // Use regular API service for non-file uploads
+        const response = await apiService.post<JobApplication>(
+          API_ENDPOINTS.JOBS.APPLY(jobId), 
+          {
+            coverLetter: applicationData.coverLetter,
+            proposedSalary: applicationData.proposedSalary
+          }
+        );
+        
+        if (response.success) {
+          return response.data;
+        }
+        
+        throw new Error(response.message || 'Failed to apply for job');
+      }
+    } catch (error) {
+      console.error('Error applying for job:', error);
+      throw error instanceof Error ? error : new Error('Failed to apply for job');
+    }
+  }
+
+  // Alternative simpler version if you're not handling file uploads yet
+  // You can use this instead of the above method if you don't need file uploads
+  async applyForJobSimple(jobId: string, applicationData: { 
+    coverLetter: string; 
+    proposedSalary?: number 
+  }): Promise<JobApplication> {
+    try {
+      const response = await apiService.post<JobApplication>(
+        API_ENDPOINTS.JOBS.APPLY(jobId), 
+        applicationData
+      );
       
       if (response.success) {
         return response.data;
@@ -251,48 +183,82 @@ export class JobsService {
       
       throw new Error(response.message || 'Failed to apply for job');
     } catch (error) {
+      console.error('Error applying for job:', error);
       throw error instanceof Error ? error : new Error('Failed to apply for job');
     }
   }
 
-  async getMyJobs(): Promise<Job[]> {
-    if (this.isUsingDemo) {
-      // Return jobs posted by current demo user
-      return demoJobs.filter(job => job.employerId === 'demo-employer-1');
-    }
-
+  async getMyPostedJobs(): Promise<Job[]> {
     try {
-      const response = await apiService.get<Job[]>('/jobs/my-jobs');
+      const response = await apiService.get<Job[]>(API_ENDPOINTS.JOBS.MY_POSTED_JOBS);
       
       if (response.success) {
         return response.data;
       }
       
-      throw new Error(response.message || 'Failed to fetch your jobs');
+      throw new Error(response.message || 'Failed to fetch your posted jobs');
     } catch (error) {
-      throw error instanceof Error ? error : new Error('Failed to fetch your jobs');
+      throw error instanceof Error ? error : new Error('Failed to fetch your posted jobs');
+    }
+  }
+
+  async getMyAppliedJobs(): Promise<Job[]> {
+    try {
+      const response = await apiService.get<Job[]>(API_ENDPOINTS.JOBS.MY_APPLIED_JOBS);
+      
+      if (response.success) {
+        return response.data;
+      }
+      
+      throw new Error(response.message || 'Failed to fetch your applied jobs');
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('Failed to fetch your applied jobs');
+    }
+  }
+
+  async getFeaturedJobs(): Promise<Job[]> {
+    try {
+      const response = await apiService.get<Job[]>(API_ENDPOINTS.JOBS.FEATURED);
+      
+      if (response.success) {
+        return response.data;
+      }
+      
+      throw new Error(response.message || 'Failed to fetch featured jobs');
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('Failed to fetch featured jobs');
+    }
+  }
+
+  async searchJobs(query: string, filters?: JobFilters): Promise<Job[]> {
+    try {
+      const queryParams = new URLSearchParams();
+      queryParams.append('q', query);
+      
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== '' && value !== null) {
+            queryParams.append(key, value.toString());
+          }
+        });
+      }
+
+      const endpoint = `${API_ENDPOINTS.JOBS.SEARCH}?${queryParams.toString()}`;
+      const response = await apiService.get<Job[]>(endpoint);
+      
+      if (response.success) {
+        return response.data;
+      }
+      
+      throw new Error(response.message || 'Failed to search jobs');
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('Failed to search jobs');
     }
   }
 
   async boostJob(id: string): Promise<Job> {
-    if (this.isUsingDemo) {
-      const jobIndex = demoJobs.findIndex(j => j.id === id);
-      if (jobIndex === -1) {
-        throw new Error('Job not found');
-      }
-
-      const updatedJob: Job = {
-        ...demoJobs[jobIndex],
-        isBoosted: true,
-        updatedAt: new Date().toISOString(),
-      };
-
-      demoJobs[jobIndex] = updatedJob;
-      return updatedJob;
-    }
-
     try {
-      const response = await apiService.post<Job>(`/jobs/${id}/boost`);
+      const response = await apiService.post<Job>(API_ENDPOINTS.JOBS.BOOST(id));
       
       if (response.success) {
         return response.data;
@@ -304,45 +270,59 @@ export class JobsService {
     }
   }
 
-  async getJobCategories(): Promise<string[]> {
-    if (this.isUsingDemo) {
-      // Fixed: Use Array.from to handle Set iteration for older TypeScript targets
-      const categoriesSet = new Set(demoJobs.map(job => job.category));
-      const categories = Array.from(categoriesSet);
-      return categories.sort();
-    }
-
+  async featureJob(id: string): Promise<Job> {
     try {
+      const response = await apiService.post<Job>(API_ENDPOINTS.JOBS.FEATURE(id));
+      
+      if (response.success) {
+        return response.data;
+      }
+      
+      throw new Error(response.message || 'Failed to feature job');
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('Failed to feature job');
+    }
+  }
+
+  async getJobCategories(): Promise<string[]> {
+    try {
+      // First try to get categories from backend
       const response = await apiService.get<string[]>('/jobs/categories');
       
       if (response.success) {
         return response.data;
       }
       
-      return []; // Return empty array if fails
+      // If backend doesn't have categories endpoint, use local constants
+      const { JOB_CATEGORIES } = await import('../utils/constants');
+      return JOB_CATEGORIES;
     } catch (error) {
       console.error('Failed to fetch job categories:', error);
-      return [];
+      // Fallback to local constants
+      const { JOB_CATEGORIES } = await import('../utils/constants');
+      return JOB_CATEGORIES;
     }
   }
 
-  async getRecommendedJobs(userId: string): Promise<Job[]> {
-    if (this.isUsingDemo) {
-      // Simple recommendation: return first 3 jobs
-      return demoJobs.slice(0, 3);
-    }
-
+  async getRecommendedJobs(userId?: string): Promise<Job[]> {
     try {
-      const response = await apiService.get<Job[]>(`/jobs/recommended/${userId}`);
+      const endpoint = userId ? `/jobs/recommended/${userId}` : '/jobs/recommended';
+      const response = await apiService.get<Job[]>(endpoint);
       
       if (response.success) {
         return response.data;
       }
       
-      return [];
+      // If no recommendations endpoint, return recent jobs
+      return this.getJobs({ limit: 3 });
     } catch (error) {
       console.error('Failed to fetch recommended jobs:', error);
-      return [];
+      // Fallback to recent jobs
+      try {
+        return await this.getJobs({ limit: 3 });
+      } catch {
+        return [];
+      }
     }
   }
 }

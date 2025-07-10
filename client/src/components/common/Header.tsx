@@ -12,7 +12,9 @@ import {
   Plus,
   Briefcase,
   Home,
-  TreePalm
+  TreePalm,
+  Info,
+  Mail
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -36,6 +38,8 @@ export const Header: React.FC = () => {
   const navLinks = [
     { path: '/', label: 'Home', icon: Home },
     { path: '/jobs', label: 'Jobs', icon: Briefcase },
+    { path: '/about', label: 'About Us', icon: Info },
+    { path: '/contact', label: 'Contact Us', icon: Mail },
   ];
 
   return (

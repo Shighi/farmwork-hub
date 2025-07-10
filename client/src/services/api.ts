@@ -1,5 +1,5 @@
 // src/services/api.ts
-import { API_BASE_URL } from '../utils/constants';
+import { API_BASE_URL, STORAGE_KEYS } from '../utils/constants';
 
 interface ApiResponse<T> {
   data: T;
@@ -13,7 +13,8 @@ class ApiService {
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
-    this.token = localStorage.getItem('token');
+    // Fix: Use the correct storage key from constants
+    this.token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
   }
 
   private getAuthHeaders() {
@@ -30,12 +31,14 @@ class ApiService {
 
   setToken(token: string) {
     this.token = token;
-    localStorage.setItem('token', token);
+    // Fix: Use the correct storage key from constants
+    localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
   }
 
   removeToken() {
     this.token = null;
-    localStorage.removeItem('token');
+    // Fix: Use the correct storage key from constants
+    localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
   }
 
   async request<T>(

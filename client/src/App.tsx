@@ -12,12 +12,14 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 import Home from './pages/Home';
 import Jobs from './pages/Jobs';
 import JobDetails from './pages/JobDetails';
+import JobApplication from './pages/JobApplication'; // New import for JobApplication
 import PostJob from './pages/PostJob';
 import { Profile } from './pages/Profile'; // Assuming this is also a named export
 import { Dashboard } from './pages/Dashboard'; // Assuming this is also a named export
 import Login from './pages/Login';
 import Register from './pages/Register';
-import AboutUs from './pages/About';
+import AboutUs from './pages/AboutUs';
+import ContactUs from './pages/ContactUs'; // New import for ContactUs
 import PrivacyPolicy from './pages/Privacy';
 import TermsOfService from './pages/Terms';
 import CookiePolicy from './pages/Cookie';
@@ -83,11 +85,33 @@ const AppContent: React.FC = () => {
           } 
         />
 
+        {/* New JobApplication Route - Protected */}
+        <Route 
+          path="/jobs/:id/apply" 
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <JobApplication />
+              </AppLayout>
+            </ProtectedRoute>
+          } 
+        />
+
          <Route 
           path="/about" 
           element={
             <AppLayout>
               <AboutUs />
+            </AppLayout>
+          } 
+        />
+
+        {/* New ContactUs Route */}
+        <Route 
+          path="/contact" 
+          element={
+            <AppLayout>
+              <ContactUs />
             </AppLayout>
           } 
         />
