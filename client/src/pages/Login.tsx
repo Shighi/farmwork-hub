@@ -11,11 +11,25 @@ const Login: React.FC = () => {
   const location = useLocation();
   const [showFeatures, setShowFeatures] = useState(true);
 
-  // Redirect if already logged in
+  // Redirect based on user type if already logged in
   useEffect(() => {
     if (user && !loading) {
-      const from = location.state?.from?.pathname || '/dashboard';
-      navigate(from, { replace: true });
+      // Check if there's a specific redirect path
+      const from = location.state?.from?.pathname;
+      
+      if (from) {
+        navigate(from, { replace: true });
+      } else {
+        // Route based on user type
+        if (user.userType === 'worker') {
+          navigate('/worker-dashboard', { replace: true });
+        } else if (user.userType === 'employer') {
+          navigate('/employer-dashboard', { replace: true });
+        } else {
+          // Fallback for other user types (admin, etc.)
+          navigate('/dashboard', { replace: true });
+        }
+      }
     }
   }, [user, loading, navigate, location]);
 
@@ -145,9 +159,9 @@ const Login: React.FC = () => {
             <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
               <h4 className="font-medium text-blue-900 mb-2">Demo Credentials</h4>
               <div className="text-sm text-blue-800 space-y-1">
-                <p><strong>Worker:</strong> worker@farmwork.com / password123</p>
-                <p><strong>Employer:</strong> employer@farmwork.com / password123</p>
-                <p><strong>Admin:</strong> admin@farmwork.com / password123</p>
+                <p><strong>Worker:</strong> grace@worker.com / password123</p>
+                <p><strong>Employer:</strong> johndoe@greenvalley.co.ke / password123</p>
+                <p><strong>Admin:</strong> admin@farmworkhub.com / password123</p>
               </div>
             </div>
 

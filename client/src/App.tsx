@@ -16,7 +16,7 @@ import JobDetails from './pages/JobDetails';
 import JobApplication from './pages/JobApplication';
 import PostJob from './pages/PostJob';
 import { Profile } from './pages/Profile';
-import { Dashboard } from './pages/Dashboard';
+import Dashboard  from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import AboutUs from './pages/AboutUs';
